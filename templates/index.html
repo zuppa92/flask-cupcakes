@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cupcake Shop</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Cupcake Shop</h1>
+
+        <form id="search-form" class="mb-4">
+            <div class="form-group">
+                <label for="search">Search by flavor</label>
+                <input type="text" class="form-control" id="search" name="search">
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+
+        <ul id="cupcake-list" class="list-group mb-4">
+            <!-- Cupcakes will be inserted here by JavaScript -->
+        </ul>
+
+        <h2>Add a New Cupcake</h2>
+        <form id="cupcake-form">
+            <div class="form-group">
+                <label for="flavor">Flavor</label>
+                <input type="text" class="form-control" id="flavor" name="flavor" required>
+            </div>
+            <div class="form-group">
+                <label for="size">Size</label>
+                <input type="text" class="form-control" id="size" name="size" required>
+            </div>
+            <div class="form-group">
+                <label for="rating">Rating</label>
+                <input type="number" step="0.1" class="form-control" id="rating" name="rating" required>
+            </div>
+            <div class="form-group">
+                <label for="image">Image URL</label>
+                <input type="url" class="form-control" id="image" name="image">
+            </div>
+            <div class="form-group">
+                <label for="ingredients">Ingredients (comma separated)</label>
+                <input type="text" class="form-control" id="ingredients" name="ingredients">
+            </div>
+            <button type="submit" class="btn btn-primary">Add Cupcake</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        async function getCupcakes(term='') {
+            let url = '/api/cupcakes';
+            if (term) {
+                url = `/api/cupcakes/search?q=${term}`;
+            }
+            const response = await axios.get(url);
+            const cupcakes = response.data.cupcakes;
+            $('#cupcake-list').empty();
+            for (let cupcake of cupcakes) {
+                $('#cupcake-list').append(`
+                    <li class="list-group-item">
+                        <img src="${cupcake.image}" alt="${cupcake.flavor}" class="img-thumbnail" width="100">
+                        <span>${cupcake.flavor} - ${cupcake.size} - ${cupcake.rating} - Ingredients: ${cupcake.ingredients.join(', ')}</span>
+                    </li>
+                `);
+            }
+        }
+
+        $('#cupcake-form').on('submit', async function(event) {
+            event.preventDefault();
+            const flavor = $('#flavor').val();
+            const size = $('#size').val();
+            const rating = $('#rating').val();
+            const image = $('#image').val();
+            const ingredients = $('#ingredients').val().split(',').map(ing => ing.trim());
+            const response = await axios.post('/api/cupcakes', {
+                flavor,
+                size,
+                rating,
+                image,
+                ingredients
+            });
+            const newCupcake = response.data.cupcake;
+            $('#cupcake-list').prepend(`
+                <li class="list-group-item">
+                    <img src="${newCupcake.image}" alt="${newCupcake.flavor}" class="img-thumbnail" width="100">
+                    <span>${newCupcake.flavor} - ${newCupcake.size} - ${newCupcake.rating} - Ingredients: ${newCupcake.ingredients.join(', ')}</span>
+                </li>
+            `);
+            $('#cupcake-form')[0].reset();
+        });
+
+        $('#search-form').on('submit', async function(event) {
+            event.preventDefault();
+            const search = $('#search').val();
+            getCupcakes(search);
+        });
+
+        $(document).ready(function() {
+            getCupcakes();
+        });
+    </script>
+</body>
+</html>

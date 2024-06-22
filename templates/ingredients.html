@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Ingredients</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Manage Ingredients</h1>
+
+        <ul id="ingredient-list" class="list-group mb-4">
+            <!-- Ingredients will be inserted here by JavaScript -->
+        </ul>
+
+        <h2>Add a New Ingredient</h2>
+        <form id="ingredient-form">
+            <div class="form-group">
+                <label for="name">Ingredient Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Ingredient</button>
+        </form>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        async function getIngredients() {
+            const response = await axios.get('/api/ingredients');
+            const ingredients = response.data.ingredients;
+            $('#ingredient-list').empty();
+            for (let ingredient of ingredients) {
+                $('#ingredient-list').append(`
+                    <li class="list-group-item">
+                        <span>${ingredient.name}</span>
+                        <button class="btn btn-danger btn-sm float-right delete-ingredient" data-id="${ingredient.id}">Delete</button>
+                    </li>
+                `);
+            }
+        }
+
+        $('#ingredient-form').on('submit', async function(event) {
+            event.preventDefault();
+            const name = $('#name').val();
+            await axios.post('/api/ingredients', {
+                name
+            });
+            $('#ingredient-form')[0].reset();
+            getIngredients();
+        });
+
+        $(document).on('click', '.delete-ingredient', async function() {
+            const id = $(this).data('id');
+            await axios.delete(`/api/ingredients/${id}`);
+            getIngredients();
+        });
+
+        $(document).ready(function() {
+            getIngredients();
+        });
+    </script>
+</body>
+</html>
